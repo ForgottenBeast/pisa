@@ -46,7 +46,9 @@ impl Deck {
     }
 
     fn key_deck(&mut self, passphrase: &str) -> Result<(),Error> {
-        
+        if passphrase == "" {
+            return Err(format_err!("passphrase can't be empty!"));
+        }
     }
 
     fn push_card(&mut self, card: u8, places: u8) {
