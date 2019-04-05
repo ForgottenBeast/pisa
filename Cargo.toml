@@ -5,9 +5,11 @@ authors = ["urist <urist@localhost.localdomain>"]
 edition = "2018"
 
 [dependencies]
+failure = "0.1.5"
 
 [lib]
 path = "src/lib/lib.rs"
 
 [[bin]]
 path = "src/main.rs"
+name = "pisa"
