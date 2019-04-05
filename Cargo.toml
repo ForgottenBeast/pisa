@@ -1,0 +1,13 @@
+[package]
+name = "pisa"
+version = "0.1.0"
+authors = ["urist <urist@localhost.localdomain>"]
+edition = "2018"
+
+[dependencies]
+
+[lib]
+path = "src/lib/lib.rs"
+
+[[bin]]
+path = "src/main.rs"
