@@ -1,6 +1,6 @@
 use failure::Error;
 
-use crate::{JOKER_1, JOKER_2, DECK_LENGTH};
+use crate::{DECK_LENGTH, JOKER_1, JOKER_2};
 
 mod utils;
 use utils::*;
@@ -20,19 +20,17 @@ impl Deck {
         if keycards.0 == keycards.1 {
             return Err(format_err!("keycards can't be the same!"));
         }
-        if keycards.0 > DECK_LENGTH - 2
-            || keycards.1 > DECK_LENGTH - 2
-        {
+        if keycards.0 > DECK_LENGTH - 2 || keycards.1 > DECK_LENGTH - 2 {
             return Err(format_err!("keycards must be between 0 and 51 inclusive!"));
         }
 
         let mut deck = Deck { keycards, state };
 
-        key_deck(&mut deck.state, passphrase,53,54)?;
+        key_deck(&mut deck.state, passphrase, 53, 54)?;
         Ok(deck)
     }
 
-    pub fn get_key(&mut self) -> Result<u8,Error> {
+    pub fn get_key(&mut self) -> Result<u8, Error> {
         //push jokers
         push_card(&mut self.state, JOKER_1, 1)?;
         push_card(&mut self.state, JOKER_2, 1)?;

@@ -1,23 +1,27 @@
 use failure::Error;
 
-pub(super) fn key_deck(deck: &mut Vec<u8>, passphrase: &str, joker1: u8, joker2: u8) -> Result<(), Error> {
+pub(super) fn key_deck(
+    deck: &mut Vec<u8>,
+    passphrase: &str,
+    joker1: u8,
+    joker2: u8,
+) -> Result<(), Error> {
     if passphrase == "" {
         return Err(format_err!("passphrase can't be empty!"));
     }
-    let alphabet: Vec<char> = (0..26)
-                .map(|x| (x + b'a') as char).collect();
+    let alphabet: Vec<char> = (0..26).map(|x| (x + b'a') as char).collect();
     for letter in passphrase.to_lowercase().as_str().chars() {
         push_card(deck, joker1, 1)?;
         push_card(deck, joker2, 2)?;
-        triple_cut(deck, joker1,joker2)?;
-        count_cut(deck,(deck[deck.len() - 1] + 1) as usize)?;
-        count_cut(deck, get_position(&alphabet,letter)? + 1)?;
+        triple_cut(deck, joker1, joker2)?;
+        count_cut(deck, (deck[deck.len() - 1] + 1) as usize)?;
+        count_cut(deck, get_position(&alphabet, letter)? + 1)?;
     }
 
     Ok(())
 }
 
-pub(super) fn triple_cut(deck: &mut Vec<u8>, first_card: u8, last_card: u8) -> Result<(),Error> {
+pub(super) fn triple_cut(deck: &mut Vec<u8>, first_card: u8, last_card: u8) -> Result<(), Error> {
     let mut c1_pos = get_position(deck, first_card)?;
     let mut c2_pos = get_position(deck, last_card)?;
 
@@ -60,7 +64,7 @@ pub(super) fn push_card(deck: &mut Vec<u8>, card: u8, places: u8) -> Result<(), 
     let starting_pos = get_position(deck, card).unwrap() as u8;
 
     let target_index: u8 = if starting_pos + places > (deck.len() - 1) as u8 {
-        ((starting_pos + places) % deck.len()as u8) + 1
+        ((starting_pos + places) % deck.len() as u8) + 1
     } else {
         starting_pos + places
     };
@@ -70,12 +74,11 @@ pub(super) fn push_card(deck: &mut Vec<u8>, card: u8, places: u8) -> Result<(), 
     Ok(())
 }
 
-pub(super) fn get_position<T: PartialEq + Copy>(deck: &[T], card: T) -> Result<usize,Error> {
+pub(super) fn get_position<T: PartialEq + Copy>(deck: &[T], card: T) -> Result<usize, Error> {
     let pos = deck.iter().position(|&s| s == card);
     if pos.is_some() {
         Ok(pos.unwrap())
-    }
-    else {
+    } else {
         Err(format_err!("not found in vector"))
     }
 }
@@ -102,7 +105,7 @@ mod tests {
         assert_eq!(test, target);
 
         let mut test: Vec<u8> = vec![0, 1, 2, 3];
-        let target: Vec<u8> = vec![0,3, 1, 2];
+        let target: Vec<u8> = vec![0, 3, 1, 2];
         push_card(&mut test, 3, 1).unwrap();
         assert_eq!(test, target);
 
@@ -112,7 +115,7 @@ mod tests {
         assert_eq!(test, target);
 
         let mut test: Vec<u8> = vec![0, 1, 2, 3];
-        let target: Vec<u8> = vec![0,1, 2, 3];
+        let target: Vec<u8> = vec![0, 1, 2, 3];
         push_card(&mut test, 1, 3).unwrap();
         assert_eq!(test, target);
 
@@ -125,7 +128,6 @@ mod tests {
         let target: Vec<u8> = vec![0, 2, 1, 3];
         push_card(&mut test, 2, 2).unwrap();
         assert_eq!(test, target);
-
     }
 
     #[test]
@@ -193,15 +195,14 @@ mod tests {
         use super::key_deck;
 
         //before pwcut target let target: Vec<u8> = vec![1,2,3,4,5,0]
-        let mut test: Vec<u8> = vec![0,1,2,3,4,5];
-        let target: Vec<u8> = vec![2,3,4,5,1,0];
-        key_deck(&mut test,"a",4,5).unwrap();
-        assert_eq!(test,target);
+        let mut test: Vec<u8> = vec![0, 1, 2, 3, 4, 5];
+        let target: Vec<u8> = vec![2, 3, 4, 5, 1, 0];
+        key_deck(&mut test, "a", 4, 5).unwrap();
+        assert_eq!(test, target);
 
-        let mut test: Vec<u8> = vec![0,1,2,3,4,5];
-        let target: Vec<u8> = vec![3,4,5,1,2,0];
-        key_deck(&mut test,"b",4,5).unwrap();
-        assert_eq!(test,target);
-
+        let mut test: Vec<u8> = vec![0, 1, 2, 3, 4, 5];
+        let target: Vec<u8> = vec![3, 4, 5, 1, 2, 0];
+        key_deck(&mut test, "b", 4, 5).unwrap();
+        assert_eq!(test, target);
     }
 }
