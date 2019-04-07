@@ -1,6 +1,6 @@
 use failure::Error;
 
-use crate::DECK_LENGTH;
+use crate::{JOKER_1, JOKER_2, DECK_LENGTH};
 
 mod utils;
 use utils::*;
@@ -20,9 +20,7 @@ impl Deck {
         if keycards.0 == keycards.1 {
             return Err(format_err!("keycards can't be the same!"));
         }
-        if keycards.0 < 0
-            || keycards.0 > DECK_LENGTH - 2
-            || keycards.1 < 0
+        if keycards.0 > DECK_LENGTH - 2
             || keycards.1 > DECK_LENGTH - 2
         {
             return Err(format_err!("keycards must be between 0 and 51 inclusive!"));
@@ -30,28 +28,28 @@ impl Deck {
 
         let mut deck = Deck { keycards, state };
 
-        key_deck(&mut deck.state, passphrase)?;
+        key_deck(&mut deck.state, passphrase,53,54)?;
         Ok(deck)
     }
 
-    pub fn get_key(&mut self) -> u8 {
+    pub fn get_key(&mut self) -> Result<u8,Error> {
         //push jokers
-        push_card(&mut self.state, 53, 1);
-        push_card(&mut self.state, 54, 1);
+        push_card(&mut self.state, JOKER_1, 1)?;
+        push_card(&mut self.state, JOKER_2, 1)?;
 
-        triple_cut(&mut self.state, 53, 54);
+        triple_cut(&mut self.state, JOKER_1, JOKER_2)?;
 
-        let count_pos = self.state[53];
-        count_cut(&mut self.state, count_pos);
+        let count_pos = self.state[53] + 1;
+        count_cut(&mut self.state, count_pos as usize)?;
 
-        push_card(&mut self.state, self.keycards.0, 1);
-        push_card(&mut self.state, self.keycards.1, 2);
+        push_card(&mut self.state, self.keycards.0, 1)?;
+        push_card(&mut self.state, self.keycards.1, 2)?;
 
-        triple_cut(&mut self.state, self.keycards.0, self.keycards.1);
+        triple_cut(&mut self.state, self.keycards.0, self.keycards.1)?;
 
-        let count_pos = self.state[53];
-        count_cut(&mut self.state, count_pos);
+        let count_pos = self.state[53] + 1;
+        count_cut(&mut self.state, count_pos as usize)?;
 
-        self.state[(self.state[0] + 1) as usize]
+        Ok(self.state[(self.state[0] + 1) as usize])
     }
 }
