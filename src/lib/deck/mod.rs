@@ -26,7 +26,7 @@ impl Deck {
 
         let mut deck = Deck { keycards, state };
 
-        key_deck(&mut deck.state, passphrase, 53, 54)?;
+        key_deck(&mut deck.state, passphrase, JOKER_1, JOKER_2)?;
         Ok(deck)
     }
 
