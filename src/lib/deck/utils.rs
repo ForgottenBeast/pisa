@@ -1,71 +1,39 @@
 use failure::Error;
 
-use crate::DECK_LENGTH;
-
-pub struct Deck {
-    keycards: (u8,u8),
-    state: Vec<u8>,
-}
-
-impl Deck {
-    pub fn new(passphrase: &str, keycards: (u8,u8)) -> Result<Deck,Error>{
-        let mut state: Vec<u8> = vec![];
-        for i in 0..DECK_LENGTH {
-            state.push(i as u8);
-        }
-
-        if keycards.0 == keycards.1 {
-            return Err(format_err!("keycards can't be the same!"));
-        }
-        if keycards.0 < 0 || keycards.0 > DECK_LENGTH - 2 || keycards.1 < 0 || keycards.1 > DECK_LENGTH - 2 {
-            return Err(format_err!("keycards must be between 0 and 51 inclusive!"));
-        }
-
-        let mut deck = Deck {
-            keycards,
-            state,
-        };
-
-        key_deck(&mut deck.state,passphrase)?;
-        Ok(deck)
-    }
-
-    pub fn get_key(&mut self) -> u8 {
-        //push jokers
-        push_card(&mut self.state,53,1);
-        push_card(&mut self.state,54,1);
-
-        triple_cut(&mut self.state,53,54);
-
-        let count_pos = self.state[53];
-        count_cut(&mut self.state, count_pos);
-
-        push_card(&mut self.state, self.keycards.0,1);
-        push_card(&mut self.state, self.keycards.1,2);
-
-        triple_cut(&mut self.state, self.keycards.0, self.keycards.1);
-
-        let count_pos = self.state[53];
-        count_cut(&mut self.state, count_pos);
-
-        self.state[(self.state[0] + 1) as usize]
-    }
-
-}
-
-fn key_deck(deck: &mut Vec<u8>, passphrase: &str) -> Result<(),Error> {
+pub(super) fn key_deck(deck: &mut Vec<u8>, passphrase: &str) -> Result<(),Error> {
     if passphrase == "" {
         return Err(format_err!("passphrase can't be empty!"));
     }
     unimplemented!();
 }
 
-fn triple_cut(deck: &mut Vec<u8>, first_card: u8, last_card: u8) {
+pub(super) fn triple_cut(deck: &mut Vec<u8>, first_card: u8, last_card: u8) {
+    let mut c1_pos = get_card_position(deck, first_card).unwrap();
+    let mut c2_pos = get_card_position(deck, last_card).unwrap();
+
+    if c1_pos > c2_pos {
+        let tmp = c1_pos;
+        c1_pos = c2_pos;
+        c2_pos = tmp;
+    }
+
+    let mut middle: Vec<u8> = deck.split_off(c1_pos);
+    let mut last_part: Vec<u8> = middle.split_off(c2_pos - c1_pos + 1);
+
+    middle.reverse();
+    for i in middle {
+        deck.insert(0,i);
+    }
+
+    last_part.reverse();
+    for i in last_part {
+        deck.insert(0,i);
+    }
 
 }
 
 //takes the first $count cards off the top and insert them just above the last card
-fn count_cut(deck: &mut Vec<u8>, count: u8) -> Result<(),Error> {
+pub(super) fn count_cut(deck: &mut Vec<u8>, count: u8) -> Result<(),Error> {
     if count < 0 {
         return Err(format_err!("count must be > 0"));
     }
@@ -80,11 +48,11 @@ fn count_cut(deck: &mut Vec<u8>, count: u8) -> Result<(),Error> {
     Ok(())
 }
 
-fn push_card(deck: &mut Vec<u8>, card: u8, places: u8) -> Result<(),Error> {
+pub(super) fn push_card(deck: &mut Vec<u8>, card: u8, places: u8) -> Result<(),Error> {
     if !deck.contains(&card) {
         return Err(format_err!("card {} isn't in deck",card));
     }
-    let starting_pos = deck.iter().position(|&s| s == card).unwrap() as u8;
+    let starting_pos = get_card_position(deck,card).unwrap() as u8;
 
     let target_index: u8 = if starting_pos + places > (deck.len() - 1) as u8 {
             (starting_pos + places) % deck.len() as u8
@@ -98,12 +66,16 @@ fn push_card(deck: &mut Vec<u8>, card: u8, places: u8) -> Result<(),Error> {
     Ok(())
 }
 
+pub(super) fn get_card_position(deck: &mut Vec<u8>, card: u8) -> Option<usize> {
+    deck.iter().position(|&s| s == card)
+}
+
 
 #[cfg(test)]
 mod tests {
     #[test]
-    fn test_push_card() {
-        use crate::deck::push_card;
+    pub(super) fn test_push_card() {
+        use super::push_card;
 
         let mut test: Vec<u8> = vec![0,1,2,3];
         let target: Vec<u8> = vec![1,0,2,3];
@@ -143,8 +115,8 @@ mod tests {
     }
 
     #[test]
-    fn test_count_cut() {
-        use crate::deck::count_cut;
+    pub(super) fn test_count_cut() {
+        use super::count_cut;
 
         let mut test: Vec<u8> = vec![0,1,2,3,4,5];
         let target: Vec<u8> = vec![2,3,4,0,1,5];
@@ -167,5 +139,34 @@ mod tests {
         assert_eq!(test,target);
 
     }
-}
 
+    #[test]
+    pub(super) fn test_triple_cut() {
+        use super::triple_cut;
+
+        let mut test: Vec<u8> = vec![0,1,2,3,4,5];
+        let mut target: Vec<u8> = vec![4,5,2,3,0,1];
+        triple_cut(&mut test,2,3);
+        assert_eq!(test,target);
+
+        let mut test: Vec<u8> = vec![0,1,2,3,4,5];
+        let mut target: Vec<u8> = vec![4,5,2,3,0,1];
+        triple_cut(&mut test,3,2);
+        assert_eq!(test,target);
+
+        let mut test: Vec<u8> = vec![0,1,2,3,4,5];
+        let mut target: Vec<u8> = vec![1,2,3,4,5,0];
+        triple_cut(&mut test,1,5);
+        assert_eq!(test,target);
+
+        let mut test: Vec<u8> = vec![0,1,2,3,4,5];
+        let mut target: Vec<u8> = vec![5,0,1,2,3,4];
+        triple_cut(&mut test,0,4);
+        assert_eq!(test,target);
+
+        let mut test: Vec<u8> = vec![0,1,2,3,4,5];
+        let mut target: Vec<u8> = vec![5,1,2,3,4,0];
+        triple_cut(&mut test,1,4);
+        assert_eq!(test,target);
+    }
+}
