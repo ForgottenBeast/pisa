@@ -17,21 +17,32 @@ pub struct Deck {
 }
 
 impl Deck {
-    pub fn new(passphrase: &str, keycards: (u8, u8)) -> Result<Deck, Error> {
+    pub fn new(passphrase: &str, keycards: Option<(u8, u8)>) -> Result<Deck, Error> {
         let mut cards: Vec<u8> = vec![];
         for i in 0..DECK_LENGTH {
             cards.push(i as u8);
         }
 
-        if keycards.0 == keycards.1 {
-            return Err(format_err!("keycards can't be the same!"));
-        }
-        if keycards.0 > DECK_LENGTH - 2 || keycards.1 > DECK_LENGTH - 2 {
-            return Err(format_err!("keycards must be between 0 and 51 inclusive!"));
-        }
+        let alphabet: Vec<char> = (0..26).map(|x| (x + b'a') as char).collect();
 
+
+        let final_keycards = {
+            if let Some(keycards) = keycards {
+                if keycards.0 == keycards.1 {
+                    return Err(format_err!("keycards can't be the same!"));
+                }
+                if keycards.0 > DECK_LENGTH - 2 || keycards.1 > DECK_LENGTH - 2 {
+                    return Err(format_err!("keycards must be between 0 and 51 inclusive!"));
+                }
+                keycards
+            }
+            else {
+                (get_position(&alphabet, passphrase.chars().collect::<Vec<char>>()[0])? as u8, get_position(&alphabet,passphrase.chars().collect::<Vec<char>>()[1])? as u8)
+            }
+        };
+        
         let mut deck = Deck {
-            keycards,
+            keycards: final_keycards,
             cards,
             state: EncodingState::Letters,
         };
