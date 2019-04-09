@@ -36,12 +36,15 @@ fn main() -> CliResult {
     let args = Cli::from_args();
     args.verbosity.setup_env_logger("pisa")?;
     
-    let mydeck: Deck = if args.keycard1.is_some() {
+    let mut mydeck: Deck = if args.keycard1.is_some() {
         Deck::new(&args.passphrase, Some((args.keycard1.unwrap(),args.keycard2.unwrap())))?
     }
     else {
         Deck::new(&args.passphrase,None)?
     };
     let stdin = io::stdin();
+    for line in stdin.lines() {
+        println!("{}", mydeck.encrypt(line));
+    }
     Ok(())
 }

@@ -51,7 +51,29 @@ impl Deck {
         Ok(deck)
     }
 
-    pub fn get_key(&mut self) -> Result<u8, Error> {
+    pub fn encrypt(&mut self, line: &str) -> String {
+        result = vec![];
+        let alphabet: Vec<char> = (0..26).map(|x| (x + b'a') as char).collect();
+        for cchar in line.to_lowercase().chars(){
+            match cchar {
+                'a'...'z' => {
+                    let number = get_position(&alphabet, cchar);
+                }
+                '0'...'9' => {
+                    if self.state == EncodingState::Letters {
+                        let xnum = get_position(&alphabet, 'x');
+
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn decrypt(&mut self, line: &str) -> String {
+
+    }
+
+    fn get_key(&mut self) -> Result<u8, Error> {
         //push jokers
         push_card(&mut self.cards, JOKER_1, 1)?;
         push_card(&mut self.cards, JOKER_2, 1)?;
